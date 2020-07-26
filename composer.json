@@ -1,0 +1,11 @@
+{
+    "name": "shoaib/ms-taxamo",
+    "description": "Taxamo for woocommerce.",
+    "type": "project",
+    "license": "GPL",
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4" : {"Inc\\":"./inc"}
+    }
+}

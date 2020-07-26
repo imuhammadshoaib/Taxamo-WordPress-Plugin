@@ -24,59 +24,148 @@
  * Text Domain:       ms-taxamo
  * Domain Path:       /languages
  */
+/*
+This program is free software; you can redistribute it and/or
+
+modify it under the terms of the GNU General Public License
+
+as published by the Free Software Foundation; either version 2
+
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+
+along with this program; if not, write to the Free Software
+
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Copyright 2005-2020 Automattic, Inc.
+*/
 
 // If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-	die;
+defined( 'ABSPATH' ) or die('You cannot access this page directly!');
+
+if ( file_exists( dirname( __FILE__ ) . '/vendor/autoload.php' ) ) {
+	require_once dirname( __FILE__ ) . '/vendor/autoload.php';
+}
+
+use Inc\Activate;
+use Inc\Deactivate;
+use Inc\Admin\AdminPages;
+
+if ( !class_exists( 'MsTaxamo' )) {
+
+	Class MsTaxamo{
+		
+		public $plugin;
+
+		/**
+		 * 
+		 * @description automatically call  
+		 * 
+		 */
+		public function __construct(){
+
+			$this->plugin = plugin_basename( __FILE__ );
+
+			add_action('init', array($this, 'custom_post_type'));
+
+			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+
+			add_action( 'admin_menu', array( $this, 'add_admin_pages' ));
+
+			add_filter( "plugin_action_links_$this->plugin", array( $this, 'settings_link' ));
+		}
+
+		/**
+		 * 
+		 * @description activate plugin 
+		 * 
+		 */
+		public function settings_link( $links ) {
+			$settings_link = '<a href="admin.php?page=ms_taxamo">Settings</a>';
+			array_push( $links, $settings_link );
+				return $links;
+		}
+
+		/**
+		 * 
+		 * @description activate plugin 
+		 * 
+		 */
+		public function admin_index() {
+			require_once plugin_dir_path( __FILE__ ) . 'templates/admin.php';
+		}
+
+		/**
+		 * 
+		 * @description activate plugin 
+		 * 
+		 */
+		public function add_admin_pages() {
+			add_menu_page( 'Taxamo', 'Taxamo', 'manage_options', 'ms_taxamo', array( $this, 'admin_index' ), 'dashicons-store', 110 );
+		}
+
+		/**
+		 * 
+		 * @description custom Post Type for admin menu  
+		 * 
+		 */
+		public function custom_post_type(){
+			register_post_type('Taxamo', [ 'public' => true, 'label' => 'Taxamo' ]);
+		}	
+
+		/**
+		 * 
+		 * @description enqueue style and script
+		 * 
+		 */
+		public function enqueue(){
+			wp_enqueue_style( 'taxamostyle', plugins_url('/assets/css/style.css', __FILE__));
+			wp_enqueue_script('taxamoscript', plugins_url('/assets/js/script.js', __FILE__));
+		}
+		
+		/**
+		 * 
+		 * @description activate plugin 
+		 * 
+		 */
+		public function activate(){
+			Activate::activate();
+		}
+	}
 }
 
 /**
- * Currently plugin version.
- * Start at version 1.0.0 and use SemVer - https://semver.org
- * Rename this for your plugin and update it as you release new versions.
+ * 
+ * @description create instace of MsTaxamo class
+ * 
  */
-define( 'MS_TAXAMO_VERSION', '1.0.0' );
-
-/**
- * The code that runs during plugin activation.
- * This action is documented in includes/class-ms-taxamo-activator.php
- */
-function activate_ms_taxamo() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-ms-taxamo-activator.php';
-	Ms_Taxamo_Activator::activate();
+if(class_exists('MsTaxamo')){
+	$MsTaxamo = new MsTaxamo();
+	//$MsTaxamo->register_admin_scripts();
 }
 
 /**
- * The code that runs during plugin deactivation.
- * This action is documented in includes/class-ms-taxamo-deactivator.php
+ * 
+ * @description activation dir
+ * 
  */
-function deactivate_ms_taxamo() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-ms-taxamo-deactivator.php';
-	Ms_Taxamo_Deactivator::deactivate();
-}
-
-register_activation_hook( __FILE__, 'activate_ms_taxamo' );
-register_deactivation_hook( __FILE__, 'deactivate_ms_taxamo' );
+register_activation_hook(__FILE__, array($MsTaxamo, 'activate'));
 
 /**
- * The core plugin class that is used to define internationalization,
- * admin-specific hooks, and public-facing site hooks.
+ * 
+ * @description deactivation dir 
+ * 
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-ms-taxamo.php';
+register_deactivation_hook(__FILE__, array('Deactivate', 'deactivate'));;
 
-/**
- * Begins execution of the plugin.
- *
- * Since everything within the plugin is registered via hooks,
- * then kicking off the plugin from this point in the file does
- * not affect the page life cycle.
- *
- * @since    1.0.0
- */
-function run_ms_taxamo() {
-
-	$plugin = new Ms_Taxamo();
-	$plugin->run();
-
-}
-run_ms_taxamo();
+//uninstall
